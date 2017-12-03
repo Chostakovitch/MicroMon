@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"config"
+	"urlwatch"
 )
 
 func main() {
@@ -13,5 +13,12 @@ func main() {
 		log.Fatalf("%v", err)
 	}
 
-	fmt.Printf("%+v", conf)
+	log.Printf("%+v", conf)
+
+	meta, err := urlwatch.Test("https://github.com")
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
+
+	log.Printf("%v", meta)
 }
