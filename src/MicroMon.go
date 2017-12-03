@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"config"
 	"log"
+
+	"config"
 )
 
 func main() {
