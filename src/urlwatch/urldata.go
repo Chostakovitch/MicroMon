@@ -3,6 +3,7 @@
 package urlwatch
 
 import (
+	"log"
 	"net/http"
 	"net/http/httptrace"
 	"time"
@@ -20,13 +21,9 @@ type MetaResponse struct {
 	Available bool
 }
 
-func Test(url string) (MetaResponse, error) {
-	return checkUrl(url)
-}
-
 //checkUrl produces a MetaResponse after visiting a given URL.
 //So called "response time" is measured as the interval bewteen the start of server processing and the first byte received.
-func checkUrl(url string) (MetaResponse, error) {
+func CheckUrl(url string) (MetaResponse, error) {
 	meta := MetaResponse{Url: url}
 
 	//New Client with low timeout
@@ -39,7 +36,7 @@ func checkUrl(url string) (MetaResponse, error) {
 
 	//Perform GET request, feed MetaResponse and return values
 	resp, err := client.Do(req)
-
+	log.Printf("test")
 	//Timeout
 	if err != nil {
 		//Timeout error : we handle that one

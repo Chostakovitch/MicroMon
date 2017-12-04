@@ -14,11 +14,9 @@ func main() {
 	}
 
 	log.Printf("%+v", conf)
+	urlwatch.CheckUrl("https://www.datadoghq.com/")
+	urlwatch.WatchWebsites(conf)
+	for {
 
-	meta, err := urlwatch.Test("https://github.com")
-	if err != nil {
-		log.Fatalf("%v", err)
 	}
-
-	log.Printf("%v", meta)
 }
