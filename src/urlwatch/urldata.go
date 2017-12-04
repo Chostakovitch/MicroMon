@@ -3,28 +3,27 @@
 package urlwatch
 
 import (
-	"log"
 	"net/http"
 	"net/http/httptrace"
 	"time"
 
-	"fmt"
 	"net"
 )
 
 //MetaResponse holds a website response's metadata, e.g. response code, response time, availibity, language...
 type MetaResponse struct {
-	Url string
+	URL string
+	Name string
 	Code      int
 	wroteRequestTime time.Time
 	RespDuration  time.Duration
 	Available bool
 }
 
-//checkUrl produces a MetaResponse after visiting a given URL.
+//checkUrl produces a MetaResponse after visiting a given Website.
 //So called "response time" is measured as the interval bewteen the start of server processing and the first byte received.
 func CheckUrl(url string) (MetaResponse, error) {
-	meta := MetaResponse{Url: url}
+	meta := MetaResponse{URL: url}
 
 	//New Client with low timeout
 	//TODO put timeout in config
@@ -36,7 +35,6 @@ func CheckUrl(url string) (MetaResponse, error) {
 
 	//Perform GET request, feed MetaResponse and return values
 	resp, err := client.Do(req)
-	log.Printf("test")
 	//Timeout
 	if err != nil {
 		//Timeout error : we handle that one
@@ -65,7 +63,6 @@ func withMetaResponse(req *http.Request, meta *MetaResponse) (*http.Request) {
 				//After DNS lookup and eventual TLS handshake : server starts processing
 				WroteRequest: func(info httptrace.WroteRequestInfo) {
 					meta.wroteRequestTime = time.Now()
-					fmt.Printf("%v", meta.wroteRequestTime)
 				},
 				//Server has processed and first byte is received : able to calculate accurate response-time
 				GotFirstResponseByte: func() {

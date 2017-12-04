@@ -5,6 +5,7 @@ import (
 
 	"config"
 	"urlwatch"
+	"reflect"
 )
 
 func main() {
@@ -14,9 +15,19 @@ func main() {
 	}
 
 	log.Printf("%+v", conf)
-	urlwatch.CheckUrl("https://www.datadoghq.com/")
-	urlwatch.WatchWebsites(conf)
-	for {
 
+	//Get map of channels ; each channel receive data for a website
+	chans := urlwatch.WatchWebsites(conf)
+
+	//Build one SelectCase per channel, and forever listen to any data coming
+	//Solution adapted from : https://stackoverflow.com/a/19992525
+	cases := make([]reflect.SelectCase, len(chans))
+	for i, ch := range chans {
+		cases[i] = reflect.SelectCase{Chan: reflect.ValueOf(ch), Dir: reflect.SelectRecv}
+	}
+	for {
+		_, value, _ := reflect.Select(cases)
+		data := value.Interface().(urlwatch.MetaResponse)
+		log.Print(data.Name)
 	}
 }
