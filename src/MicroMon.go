@@ -5,10 +5,11 @@ import (
 
 	"config"
 	"urlwatch"
-	"reflect"
+	"metric"
 )
 
 func main() {
+	//TODO splitter main en plusieurs fonctions
 	conf, err := config.FetchConfig("mm.conf")
 	if err != nil {
 		log.Fatalf("%v", err)
@@ -16,18 +17,22 @@ func main() {
 
 	log.Printf("%+v", conf)
 
-	//Get map of channels ; each channel receive data for a website
-	chans := urlwatch.WatchWebsites(conf)
+	//Get channel for website response data
+	ch := urlwatch.WatchWebsites(conf)
 
-	//Build one SelectCase per channel, and forever listen to any data coming
-	//Solution adapted from : https://stackoverflow.com/a/19992525
-	cases := make([]reflect.SelectCase, len(chans))
-	for i, ch := range chans {
-		cases[i] = reflect.SelectCase{Chan: reflect.ValueOf(ch), Dir: reflect.SelectRecv}
+	datas := metric.NewRespMap(len(conf.Websites))
+	for k, _ := range conf.Websites {
+		datas[k] = metric.NewSafeData()
 	}
+
+	go metric.CalculateMetrics(&datas, []metric.Metric{metric.AvgRespTime{}})
+
+	//Forever listen to data coming from channel : sequential access to datas variable
 	for {
-		_, value, _ := reflect.Select(cases)
-		data := value.Interface().(urlwatch.MetaResponse)
-		log.Print(data.Name)
+		data := <-ch
+		name := data.Name
+		datas[name].Mux.Lock()
+		datas[name].Datas = append(datas[name].Datas, data)
+		datas[name].Mux.Unlock()
 	}
 }

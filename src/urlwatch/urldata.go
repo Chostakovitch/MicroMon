@@ -17,6 +17,7 @@ type MetaResponse struct {
 	Code      int
 	wroteRequestTime time.Time
 	RespDuration  time.Duration
+	Timestamp time.Time
 	Available bool
 }
 
@@ -35,6 +36,8 @@ func CheckUrl(url string) (MetaResponse, error) {
 
 	//Perform GET request, feed MetaResponse and return values
 	resp, err := client.Do(req)
+
+	meta.Timestamp = time.Now()
 	//Timeout
 	if err != nil {
 		//Timeout error : we handle that one
