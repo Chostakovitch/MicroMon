@@ -5,7 +5,6 @@ import (
 	"urlwatch"
 	"sync"
 	"time"
-	"log"
 )
 
 type respMap map[string]*safeData
@@ -26,23 +25,21 @@ func NewSafeData() (*safeData) {
 	return &safeData{Datas: make([]urlwatch.MetaResponse, 0)}
 }
 
-//CalculateMetrics regularly produces metrics from MetaResponses which are added in safeData concurrently.
-func CalculateMetrics(s *respMap, metrics []Metric) {
-	i := 0
-	for range time.Tick(10 * time.Second) {
-		i++
-		for k, v := range *s {
-			v.Mux.Lock()
-			datas := since(&v.Datas, 2)
-			v.Mux.Unlock()
-			for _, m := range metrics {
-				log.Print(k + " : " + m.Description() + " : " + m.Compute(datas).Format(false))
-			}
-			if i % 6 == 0 {
+//ComputeMetrics compute multiple metrics for a given timeframe and return the packed result.
+//It operates on a respMap struct, so a set of websites associated with MetaResponse.
+func (s *respMap) ComputeMetrics(metrics []Metric, minutes int) (map[string]map[Metric]Result) {
+	res := make(map[string]map[Metric]Result)
+	for k, v := range *s {
+		v.Mux.Lock()
+		datas := since(&v.Datas, minutes)
+		v.Mux.Unlock()
 
-			}
+		res[k] = make(map[Metric]Result)
+		for _, m := range metrics {
+			res[k][m] = m.Compute(datas)
 		}
 	}
+	return res
 }
 
 func since(data *[]urlwatch.MetaResponse, minutes int) ([]urlwatch.MetaResponse) {

@@ -2,8 +2,10 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"config"
+	"report"
 	"urlwatch"
 	"metric"
 )
@@ -25,7 +27,19 @@ func main() {
 		datas[k] = metric.NewSafeData()
 	}
 
-	go metric.CalculateMetrics(&datas, []metric.Metric{metric.AvgRespTime{}})
+
+	metrics := []metric.Metric{metric.AvgRespTime{}, metric.MaxRespTime{}, metric.CodeCount{}, metric.Availibility{}}
+	reporter := report.NewReporter(report.DefaultLogger(), report.DefaultFormatter{})
+
+
+	go func() {
+		for range time.Tick(10 * time.Second) {
+			res := (&datas).ComputeMetrics(metrics, 2)
+			for k, v := range res {
+				reporter.Report(metrics, v, k, 2)
+			}
+		}
+	}()
 
 	//Forever listen to data coming from channel : sequential access to datas variable
 	for {
