@@ -6,19 +6,19 @@ import (
 	"yaml.v2"
 )
 
-//A Config is just a set of websites to check and a default interval.
+//Config is just a set of websites to check and a default interval.
 type Config struct {
 	Websites        map[string]Website
 	DefaultInterval int
 }
 
-//A Website is an URL and a check interval.
+//Website is an URL and a check interval.
 type Website struct {
 	URL      string
 	Interval int
 }
 
-//FetchConfig parses a YAML file which defines the websites to visit and the check inverval.
+//FetchConfig parses a YAML file which defines websites to visit and check invervals.
 //Takes an input path and return a Config object - or an error.
 func FetchConfig(path string) (Config, error) {
 	conf := Config{}

@@ -1,26 +1,40 @@
 package metric
 
 import (
-	"urlwatch"
 	"strconv"
 	"time"
+	"urlwatch"
 )
 
+//Result defines what should do a metric result.
 type Result interface {
-	Format(inline bool) (string)
+	//Format returns a formatted string representing the Result.
+	//The inline parameters defined whether the resulting string contains linebreaks or not.
+	Format(inline bool) string
 }
 
+//Metric defines how a metric should behave.
 type Metric interface {
-	Compute([]urlwatch.MetaResponse) (Result)
-	Description() (string)
+	//Compute takes a slice of MetaResponse and produce a single aggregated Result.
+	Compute([]urlwatch.MetaResponse) Result
+
+	//Description is a string describing what does the Metric.
+	Description() string
 }
 
+//AvgRespTime implements Metric and compute the average response time.
 type AvgRespTime struct{}
-type MaxRespTime struct{}
-type CodeCount struct{}
-type Availibility struct{}
 
-func (AvgRespTime) Compute(data []urlwatch.MetaResponse) (Result) {
+//MaxRespTime implements Metric and compute the maximum response time.
+type MaxRespTime struct{}
+
+//CodeCount implements Metric and counts occurrence of HTTP response code.
+type CodeCount struct{}
+
+//Availability implements Metric and compute the percentage of availability.
+type Availability struct{}
+
+func (AvgRespTime) Compute(data []urlwatch.MetaResponse) Result {
 	sum := float64(0)
 	for _, m := range data {
 		sum += float64(m.RespDuration) / float64(time.Millisecond)
@@ -28,11 +42,11 @@ func (AvgRespTime) Compute(data []urlwatch.MetaResponse) (Result) {
 	return MetricFloat(sum / float64(len(data)))
 }
 
-func (AvgRespTime) Description() (string) {
+func (AvgRespTime) Description() string {
 	return "Average response time (ms)"
 }
 
-func(MaxRespTime) Compute(data []urlwatch.MetaResponse) (Result) {
+func (MaxRespTime) Compute(data []urlwatch.MetaResponse) Result {
 	max := time.Duration(0)
 	for _, m := range data {
 		if m.RespDuration > max {
@@ -42,11 +56,11 @@ func(MaxRespTime) Compute(data []urlwatch.MetaResponse) (Result) {
 	return MetricFloat(float64(max) / float64(time.Millisecond))
 }
 
-func (MaxRespTime) Description() (string) {
+func (MaxRespTime) Description() string {
 	return "Maximum response time (ms)"
 }
 
-func (CodeCount) Compute(data []urlwatch.MetaResponse) (Result) {
+func (CodeCount) Compute(data []urlwatch.MetaResponse) Result {
 	codes := make(map[string]int)
 	for _, m := range data {
 		codes[strconv.Itoa(m.Code)] += 1
@@ -58,13 +72,13 @@ func (CodeCount) Compute(data []urlwatch.MetaResponse) (Result) {
 	return res
 }
 
-func (CodeCount) Description() (string) {
+func (CodeCount) Description() string {
 	return "HTTP codes counts"
 }
 
-func (Availibility) Compute(data []urlwatch.MetaResponse) (Result) {
+func (Availability) Compute(data []urlwatch.MetaResponse) Result {
 	count := 0
-	for _, m := range(data) {
+	for _, m := range data {
 		if m.Available {
 			count++
 		}
@@ -72,24 +86,31 @@ func (Availibility) Compute(data []urlwatch.MetaResponse) (Result) {
 	return MetricFloat(float64(count) / float64(len(data)) * 100)
 }
 
-func (Availibility) Description() (string) {
-	return "Availibility (%)"
+func (Availability) Description() string {
+	return "Availability (%)"
 }
 
+//MetricInt implements Result and represents an integer result.
 type MetricInt int
+
+//MetricFloat implements Result and represents a float result.
 type MetricFloat float64
+
+//MetricMap implements Result and is a composite type, i.e. a map of string associated with Result.
+//Keys are allowed to be another MetricMap.
 type MetricMap map[string]Result
 
-func (m MetricInt) Format(inline bool) (string) {
+func (m MetricInt) Format(inline bool) string {
 	return strconv.Itoa(int(m))
 }
 
-func (m MetricFloat) Format(inline bool) (string) {
+func (m MetricFloat) Format(inline bool) string {
 	return strconv.FormatFloat(float64(m), 'f', 3, 64)
 }
 
-func (m MetricMap) Format(inline bool) (string) {
+func (m MetricMap) Format(inline bool) string {
 	var res string
+	//As keys can be composite, call Format for each Result.
 	for k, v := range m {
 		if inline {
 			res += "{" + k + " : " + v.Format(inline) + "}"

@@ -5,38 +5,45 @@ import (
 	"time"
 
 	"config"
+	"metric"
 	"report"
 	"urlwatch"
-	"metric"
 )
 
-func main() {
-	//TODO splitter main en plusieurs fonctions
+func getConfig() config.Config {
 	conf, err := config.FetchConfig("mm.conf")
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
+	return conf
+}
 
-	log.Printf("%+v", conf)
+func main() {
+	//Get configuration from file
+	conf := getConfig()
 
 	//Get channel for website response data
 	ch := urlwatch.WatchWebsites(conf)
 
+	//Create data structure for response data
 	datas := metric.NewRespMap(len(conf.Websites))
 	for k, _ := range conf.Websites {
 		datas[k] = metric.NewSafeData()
 	}
 
-
-	metrics := []metric.Metric{metric.AvgRespTime{}, metric.MaxRespTime{}, metric.CodeCount{}, metric.Availibility{}}
+	//Configure metrics and reporter
+	metrics := []metric.Metric{metric.AvgRespTime{}, metric.MaxRespTime{}, metric.CodeCount{}, metric.Availability{}}
 	reporter := report.NewReporter(report.DefaultLogger(), report.DefaultFormatter{})
 
-
+	//Compute and write metrics every 10 seconds / 1 minute
 	go func() {
+		i := 0
 		for range time.Tick(10 * time.Second) {
-			res := (&datas).ComputeMetrics(metrics, 2)
-			for k, v := range res {
-				reporter.Report(metrics, v, k, 2)
+			i++
+			reporter.Report(metrics, (&datas).ComputeMetrics(metrics, 2), 2)
+			reporter.Report(metrics, (&datas).ComputeMetrics(metrics, 2), 10)
+			if i%6 == 0 {
+				reporter.Report(metrics, (&datas).ComputeMetrics(metrics, 2), 60)
 			}
 		}
 	}()

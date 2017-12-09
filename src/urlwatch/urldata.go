@@ -1,5 +1,3 @@
-//urlwatch contains functions to watch URLs, i.e. check at regular intervals, using Config type as input.
-//urlwatch defines the MetaResponse type, which holds websites responses' metadata.
 package urlwatch
 
 import (
@@ -12,16 +10,16 @@ import (
 
 //MetaResponse holds a website response's metadata, e.g. response code, response time, availibity, language...
 type MetaResponse struct {
-	URL string
-	Name string
-	Code      int
+	URL              string
+	Name             string
+	Code             int
 	wroteRequestTime time.Time
-	RespDuration  time.Duration
-	Timestamp time.Time
-	Available bool
+	RespDuration     time.Duration
+	Timestamp        time.Time
+	Available        bool
 }
 
-//checkUrl produces a MetaResponse after visiting a given Website.
+//CheckUrl produces a MetaResponse after visiting a given Website.
 //So called "response time" is measured as the interval bewteen the start of server processing and the first byte received.
 func CheckUrl(url string) (MetaResponse, error) {
 	meta := MetaResponse{URL: url}
@@ -38,9 +36,10 @@ func CheckUrl(url string) (MetaResponse, error) {
 	resp, err := client.Do(req)
 
 	meta.Timestamp = time.Now()
-	//Timeout
+
+	//Timeout management
 	if err != nil {
-		//Timeout error : we handle that one
+		//If error is timeout error, we handle that one and throw others
 		if nerr, ok := err.(net.Error); ok && nerr.Timeout() {
 			meta.Available = false
 		} else {
@@ -57,9 +56,9 @@ func CheckUrl(url string) (MetaResponse, error) {
 }
 
 //withMetaResponse adapts an HTTP Request to feed a MetaResponse object while performing request, thank to httptrace features.
-//Return a pointer to the augmented Request.
-func withMetaResponse(req *http.Request, meta *MetaResponse) (*http.Request) {
-	 newReq := req.WithContext(
+//Returns a pointer to the augmented Request.
+func withMetaResponse(req *http.Request, meta *MetaResponse) *http.Request {
+	newReq := req.WithContext(
 		httptrace.WithClientTrace(
 			req.Context(),
 			&httptrace.ClientTrace{
@@ -72,6 +71,6 @@ func withMetaResponse(req *http.Request, meta *MetaResponse) (*http.Request) {
 					meta.RespDuration = time.Now().Sub(meta.wroteRequestTime)
 				},
 			}),
-		)
-	 return newReq
+	)
+	return newReq
 }
