@@ -1,4 +1,4 @@
-//This package contains tests to confront the application logic.
+//Package test contains tests to confront the application logic.
 package test
 
 import (
@@ -10,8 +10,8 @@ import (
 	"urlwatch"
 )
 
-//testAlerting tests the alerting logic. It simulates a real word situation and configuration.
-//It watch a local webserver for a while and compute availability. It also calls the alerting hook.
+//TestAlerting tests the alerting logic. It simulates a real word situation and configuration.
+//It watches a local webserver for a while and compute availability. It also calls the alerting hook.
 //At some point, it stops the webserver and repeat the same process.
 //It checks if the hook returns a valid string which indicates that the web server is now marked as unavailable.
 //It restart the web server and checks if the hook has marked the web server as recovered.
@@ -76,7 +76,7 @@ func getAvailStatus(resp []urlwatch.MetaResponse, conf config.Config, alertHook 
 	avail := metric.Availability{}.Compute(resp)
 	dummyWebs := make([]metric.WebMetrics, 1)
 	dummyWeb := metric.WebMetrics{10, "localhost", make([]metric.WebMetric, 1)}
-	dummyWeb.M = append(dummyWeb.M, metric.WebMetric{metric.Availability{}, avail})
+	dummyWeb.Metrics = append(dummyWeb.Metrics, metric.WebMetric{metric.Availability{}, avail})
 	dummyWebs = append(dummyWebs, dummyWeb)
 	return alertHook(dummyWebs)
 }

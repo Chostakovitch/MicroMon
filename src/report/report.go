@@ -1,14 +1,12 @@
-//This package contains types and methods to format and write metrics with context.
+//Package report contains types and methods to format and write metrics with context.
 package report
 
 import (
 	"encoding/xml"
 	"fmt"
 	"log"
-	"os"
-	"strings"
-
 	"metric"
+	"os"
 )
 
 //Formatter defines how a metric formatter, i.e. a type which operates on Metric and associated Results, should behave.
@@ -24,14 +22,14 @@ type Formatter interface {
 	Suffix() string
 }
 
-//A Reporter is the association of a Logger and a Formatter.
+//Reporter is the association of a Logger and a Formatter.
 //This type is meant to be generic, i.e. to allow formatting in any fashion and writing everywhere.
 type Reporter struct {
 	l *log.Logger
 	f Formatter
 }
 
-//NewReported constructs a Reported from a Logger and a Formatter.
+//NewReported constructs a Reporter from a Logger and a Formatter.
 func NewReporter(l *log.Logger, f Formatter) Reporter {
 	return Reporter{l, f}
 }
@@ -44,14 +42,14 @@ type XMLFormatter struct{}
 
 func (DefaultFormatter) Single(m metric.WebMetric) string {
 	//Each Metric on a single line
-	return m.M.Description() + " : " + m.R.Format(true)
+	return m.Source.Description() + " : " + m.Output.Format(true)
 }
 
 func (f DefaultFormatter) Multiple(m metric.WebMetrics) string {
 	//Website name
-	res := fmt.Sprintf("=== %v (last %v minutes) ===\n", m.N, m.Timeframe)
+	res := fmt.Sprintf("=== %v (last %v minutes) ===\n", m.WebsiteName, m.Timeframe)
 	//Each metric with a tabulation
-	for _, v := range m.M {
+	for _, v := range m.Metrics {
 		res += fmt.Sprintf("\t%v\n", f.Single(v))
 	}
 	return res
@@ -66,12 +64,12 @@ func (DefaultFormatter) Suffix() string {
 }
 
 func (XMLFormatter) Single(m metric.WebMetric) string {
-	return fmt.Sprintf("<metric><name>%v</name><description>%v</description><value>%v</value></metric>", m.M.Name(), m.M.Description(), m.R.Format(true))
+	return fmt.Sprintf("<metric><name>%v</name><description>%v</description><value>%v</value></metric>", m.Source.Name(), m.Source.Description(), m.Output.Format(true))
 }
 
 func (f XMLFormatter) Multiple(m metric.WebMetrics) string {
-	res := fmt.Sprintf("<metrics><website><name>%v</name></website><timeframe>%v</timeframe>", m.N, m.Timeframe)
-	for _, v := range m.M {
+	res := fmt.Sprintf("<metrics><website><name>%v</name></website><timeframe>%v</timeframe>", m.WebsiteName, m.Timeframe)
+	for _, v := range m.Metrics {
 		res += f.Single(v)
 	}
 	res += fmt.Sprintf("</metrics>")
@@ -91,9 +89,7 @@ func (XMLFormatter) Suffix() string {
 }
 
 //Report allows to format and write multiple metrics for multiple website computed within a given timeframe.
-//order defines metrics order when formatting.
-//metrics is map which associated a website name with Metrics and their corresponding Result.
-//Report use the Formatter to format (Metric, Result)s and the Logger to write the final result.
+//It uses the Formatter to format (Metric, Result)s and the Logger to write the final result.
 func (r Reporter) Report(metrics []metric.WebMetrics) {
 	res := r.f.Prefix()
 	for _, v := range metrics {
@@ -108,8 +104,8 @@ func DefaultLogger() *log.Logger {
 	return log.New(os.Stdout, "[MicroMon] ", log.LstdFlags)
 }
 
-//FileLogger is a convenient function which returns a pointer to a logger which writes in a file
-//Path is given in parameter
+//FileLogger is a convenient function which returns a pointer to a logger which writes in a file.
+//Path is given in parameter.
 func FileLogger(path string) *log.Logger {
 	f, err := os.OpenFile(path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, os.ModePerm)
 	if err != nil {

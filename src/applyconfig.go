@@ -8,7 +8,7 @@ import (
 	"report"
 )
 
-//getConfig returns a Config fetched from the path given in parameter
+//getConfig returns a Config fetched from the path given in parameter.
 func getConfig(path string) config.Config {
 	conf, err := config.FetchConfig(path)
 	if err != nil {
@@ -17,7 +17,7 @@ func getConfig(path string) config.Config {
 	return conf
 }
 
-//getMetrics returns instances of Metric from the configuration
+//getMetrics returns instances of Metric from the configuration.
 func getMetrics(conf config.Config) []metric.Metric {
 	metrics := make([]metric.Metric, 0)
 	//Try to instantiate each metric
@@ -32,7 +32,7 @@ func getMetrics(conf config.Config) []metric.Metric {
 	return metrics
 }
 
-//getMetrics returns instances of Hook from the configuration
+//getHooks returns instances of Hook from the configuration.
 func getHooks(conf config.Config) []hook.Hook {
 	hooks := make([]hook.Hook, 0)
 	//Try to instantiate each hook : get the Hooker and the Hook closure with closed-config.

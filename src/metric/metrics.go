@@ -10,7 +10,7 @@ import (
 //Result defines what should do a metric result.
 type Result interface {
 	//Format returns a formatted string representing the Result.
-	//The inline parameters defined whether the resulting string contains linebreaks or not.
+	//The inline parameters defines whether the resulting string should contain linebreaks or not.
 	Format(inline bool) string
 }
 
@@ -26,7 +26,7 @@ type Metric interface {
 	Name() string
 }
 
-//GetMetric allows to instantiate a Metric from a string and returns it.
+//GetMetric allows to instantiate a Metric from a string and return it.
 //If no corresponding Metric is found, a non-nil error is returned.
 func GetMetric(name string) (Metric, error) {
 	switch name {

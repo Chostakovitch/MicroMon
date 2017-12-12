@@ -1,4 +1,4 @@
-//urlwatch contains functions to watch URLs, i.e. check at regular intervals, using Config type as input.
+//Package urlwatch contains functions to watch URLs, i.e. check them at regular intervals, using configuration as input.
 //urlwatch defines the MetaResponse type, which holds websites responses' metadata.
 package urlwatch
 
@@ -9,8 +9,8 @@ import (
 	"config"
 )
 
-//WatchWebsites takes a Config and check the URLs at user-defined intervals.
-//Returns a channel which will receive MetaResponse each time a request is performed.
+//WatchWebsites takes the app configuration and checks the URLs at user-defined intervals.
+//It returns a channel which will receive MetaResponse each time a request is completed.
 //Each website has its own timed goroutine.
 func WatchWebsites(conf config.Config) chan MetaResponse {
 	ch := make(chan MetaResponse, 100)

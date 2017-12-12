@@ -1,4 +1,4 @@
-//config contains utilities to retrieve and build MicroMon configuration.
+//Package config contains utilities to retrieve and build MicroMon configuration.
 package config
 
 import (
@@ -6,7 +6,8 @@ import (
 	"yaml.v2"
 )
 
-//Config is just a set of websites to check and a default interval.
+//Config is a struct which mirrors the structure of the YAML configuration file.
+//It contains user customisable parameters, such as websites to visit and metrics to compute.
 type Config struct {
 	Websites        map[string]Website
 	DefaultInterval int
@@ -18,14 +19,14 @@ type Config struct {
 	Output          string
 }
 
-//Website is an URL and a check interval.
+//Website wraps an URL and a check interval.
 type Website struct {
 	URL      string
 	Interval int
 }
 
-//FetchConfig parses a YAML file which defines websites to visit and check invervals.
-//Takes an input path and return a Config object - or an error.
+//FetchConfig parses a YAML file which reflects MicroMon's configuration.
+//It takes an input path and return a Config object - or an error.
 func FetchConfig(path string) (Config, error) {
 	conf := Config{}
 

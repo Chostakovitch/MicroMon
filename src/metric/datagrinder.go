@@ -1,6 +1,6 @@
-//metric contains methods to aggregate MetaResponse into timed metrics and report them.
+//Package metric contains methods to aggregate MetaResponse into timed metrics and report them.
 //
-//metric defines several types. First, Metric and Result are primitives to aggregate MetaResponse.
+//metric defines several types. First, Metric and Result are primitives used to aggregate MetaResponse : Metric holds the computation and Result the result.
 //Second, respMap associates a website's name with a safeData, which is a thread-compatible slice of MetaResponse.
 //Finally, WebMetrics associates a website's name with a slice of WebMetric, which is basically a Metric along with its Result.
 //
@@ -15,20 +15,21 @@ import (
 
 //WebMetrics is a simple wrapper to associate a website name with its set of Metric and Result, for a given timeframe (in minutes)
 type WebMetrics struct {
-	Timeframe int
-	N         string
-	M         []WebMetric
+	Timeframe   int
+	WebsiteName string
+	Metrics     []WebMetric
 }
 
+//WebMetric associate a Metric with its Result.
 type WebMetric struct {
-	M Metric
-	R Result
+	Source Metric
+	Output Result
 }
 
 //respMap is just a map of website names associated with a safeData struct.
 type respMap map[string]*safeData
 
-//safeData is slice of MetaResponse along with a mutex.
+//safeData is a slice of MetaResponse along with a mutex.
 //As data can be processed from multiple threads (e.g. feeding, removing old data, reading, etc.,), sync is a must have.
 type safeData struct {
 	Datas []urlwatch.MetaResponse
@@ -45,8 +46,8 @@ func NewSafeData() *safeData {
 	return &safeData{Datas: make([]urlwatch.MetaResponse, 0)}
 }
 
-//ComputeMetrics compute multiple metrics for a given timeframe and return the packed result.
-//It operates on a respMap struct, basically a set of websites names associated with MetaResponse.
+//ComputeMetrics compute multiple metrics for a given timeframe and return the packed result (each element corresponds to a website with its metrics).
+//It operates on a respMap struct, basically a set of websites names associated with multiple MetaResponse.
 func (s *respMap) ComputeMetrics(metrics []Metric, minutes int) []WebMetrics {
 	res := make([]WebMetrics, 0)
 
@@ -57,7 +58,7 @@ func (s *respMap) ComputeMetrics(metrics []Metric, minutes int) []WebMetrics {
 		datas := since(&v.Datas, minutes)
 		v.Mux.Unlock()
 
-		//If not data is available we do not compute anything
+		//If no data is available, do not compute
 		if len(datas) == 0 {
 			continue
 		}
@@ -65,7 +66,7 @@ func (s *respMap) ComputeMetrics(metrics []Metric, minutes int) []WebMetrics {
 
 		//For each metric asked, add result
 		for _, m := range metrics {
-			tempRes.M = append(tempRes.M, WebMetric{m, m.Compute(datas)})
+			tempRes.Metrics = append(tempRes.Metrics, WebMetric{m, m.Compute(datas)})
 		}
 
 		res = append(res, tempRes)
