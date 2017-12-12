@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"metric"
 )
@@ -17,6 +18,10 @@ type Formatter interface {
 	//Multiple takes a WebMetrics, i.e. Metrics with their Results for a website and a timeframe.
 	//Multiple produces a formatted string which reports all theses informations.
 	Multiple(metric.WebMetrics) string
+	//Prefix returns a string which should precede a global reporting.
+	Prefix() string
+	//Suffix returns a string which should follow a global reporting.
+	Suffix() string
 }
 
 //A Reporter is the association of a Logger and a Formatter.
@@ -52,6 +57,14 @@ func (f DefaultFormatter) Multiple(m metric.WebMetrics) string {
 	return res
 }
 
+func (DefaultFormatter) Prefix() string {
+	return "Reporting computed metrics :\n"
+}
+
+func (DefaultFormatter) Suffix() string {
+	return ""
+}
+
 func (XMLFormatter) Single(m metric.WebMetric) string {
 	return fmt.Sprintf("<metric><name>%v</name><description>%v</description><value>%v</value></metric>", m.M.Name(), m.M.Description(), m.R.Format(true))
 }
@@ -69,15 +82,24 @@ func (f XMLFormatter) Multiple(m metric.WebMetrics) string {
 	return string(buf)
 }
 
+func (XMLFormatter) Prefix() string {
+	return "<report>"
+}
+
+func (XMLFormatter) Suffix() string {
+	return "</report>"
+}
+
 //Report allows to format and write multiple metrics for multiple website computed within a given timeframe.
 //order defines metrics order when formatting.
 //metrics is map which associated a website name with Metrics and their corresponding Result.
 //Report use the Formatter to format (Metric, Result)s and the Logger to write the final result.
 func (r Reporter) Report(metrics []metric.WebMetrics) {
-	res := ""
+	res := r.f.Prefix()
 	for _, v := range metrics {
 		res += r.f.Multiple(v)
 	}
+	res += r.f.Suffix()
 	r.l.Printf("%v", res)
 }
 

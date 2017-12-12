@@ -24,7 +24,7 @@ func TestAlerting() bool {
 	//Create minimal configuration
 	webserv := make(map[string]config.Website)
 	webserv["localhost"] = config.Website{"http://localhost:8080", 1}
-	conf := config.Config{Websites: webserv, Timeout: 3}
+	conf := config.Config{Websites: webserv, Timeout: 3, AvailThreshold: 50}
 
 	//Gather incoming MetaResponse
 	ch := urlwatch.WatchWebsites(conf)
@@ -42,21 +42,21 @@ func TestAlerting() bool {
 	hook := hook.AlertHook{}.GetHook(conf)
 
 	//Local webserver is available, hook should not return anything
-	time.Sleep(10 * time.Second)
+	time.Sleep(2 * time.Second)
 	if getAvailStatus(data.Datas, conf, hook) != "" {
 		return false
 	}
 
 	//We shutdown local webserver, hook should detect a new unavailability
 	srv.Close()
-	time.Sleep(3 * time.Second)
+	time.Sleep(2 * time.Second)
 	if getAvailStatus(data.Datas, conf, hook) != "unavailable" {
 		return false
 	}
 
 	//We restart local webserver, hook should detect recovery
 	srv = startHttpServer()
-	time.Sleep(10 * time.Second)
+	time.Sleep(2 * time.Second)
 	defer srv.Close()
 	if getAvailStatus(data.Datas, conf, hook) != "recovered" {
 		return false

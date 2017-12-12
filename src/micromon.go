@@ -8,7 +8,10 @@
 package main
 
 import (
+	"flag"
 	"hook"
+	"log"
+	"test"
 	"time"
 
 	"metric"
@@ -17,8 +20,23 @@ import (
 )
 
 func main() {
+	//Handle command-line flags
+	testing := flag.Bool("test", false, "Set the flag to run tests")
+	confPath := flag.String("c", "mm.conf", "Path to the configuration file")
+	flag.Parse()
+
+	//Run in test mode : assert tests
+	if *testing {
+		launchTests()
+	} else {
+		start(*confPath)
+	}
+}
+
+//start... starts MicroMon with the configuration file which path is given in parameter.
+func start(path string) {
 	//Get configuration from file
-	conf := getConfig("mm.conf")
+	conf := getConfig(path)
 
 	//Get channel for receiving website response data
 	ch := urlwatch.WatchWebsites(conf)
@@ -64,6 +82,17 @@ func main() {
 		datas[name].Datas = append(datas[name].Datas, data)
 		datas[name].Mux.Unlock()
 	}
+}
+
+//launchTests performs tests against the application logic and report result.
+func launchTests() {
+	log.Printf("Starting tests...")
+	if test.TestAlerting() {
+		log.Print("Alerting test successfully passed !")
+	} else {
+		log.Fatalf("Alert test failed !")
+	}
+	log.Printf("All tests passed !")
 }
 
 //reportResult takes a slice of []WebMetrics and report each inner slice.

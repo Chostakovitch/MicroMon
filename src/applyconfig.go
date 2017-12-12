@@ -12,7 +12,7 @@ import (
 func getConfig(path string) config.Config {
 	conf, err := config.FetchConfig(path)
 	if err != nil {
-		log.Fatalf("%v", err)
+		log.Fatalf("Error fetching configuration : %v", err)
 	}
 	return conf
 }
