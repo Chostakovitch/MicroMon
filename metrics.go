@@ -1,10 +1,9 @@
-package metric
+package micromon
 
 import (
 	"fmt"
 	"strconv"
 	"time"
-	"urlwatch"
 )
 
 //Result defines what should do a metric result.
@@ -17,7 +16,7 @@ type Result interface {
 //Metric defines how a metric should behave.
 type Metric interface {
 	//Compute takes a slice of MetaResponse and produce a single aggregated Result.
-	Compute([]urlwatch.MetaResponse) Result
+	Compute([]MetaResponse) Result
 
 	//Description returns a string describing what does the Metric.
 	Description() string
@@ -54,7 +53,7 @@ type CodeCount struct{}
 //Availability implements Metric and compute the percentage of availability.
 type Availability struct{}
 
-func (AvgRespTime) Compute(data []urlwatch.MetaResponse) Result {
+func (AvgRespTime) Compute(data []MetaResponse) Result {
 	sum := float64(0)
 	for _, m := range data {
 		sum += float64(m.RespDuration) / float64(time.Millisecond)
@@ -70,7 +69,7 @@ func (AvgRespTime) Name() string {
 	return "averageTime"
 }
 
-func (MaxRespTime) Compute(data []urlwatch.MetaResponse) Result {
+func (MaxRespTime) Compute(data []MetaResponse) Result {
 	max := time.Duration(0)
 	for _, m := range data {
 		if m.RespDuration > max {
@@ -88,7 +87,7 @@ func (MaxRespTime) Name() string {
 	return "maxTime"
 }
 
-func (CodeCount) Compute(data []urlwatch.MetaResponse) Result {
+func (CodeCount) Compute(data []MetaResponse) Result {
 	codes := make(map[string]int)
 	for _, m := range data {
 		codes[strconv.Itoa(m.Code)] += 1
@@ -108,7 +107,7 @@ func (CodeCount) Name() string {
 	return "codeCount"
 }
 
-func (Availability) Compute(data []urlwatch.MetaResponse) Result {
+func (Availability) Compute(data []MetaResponse) Result {
 	count := 0
 	for _, m := range data {
 		if m.Available {

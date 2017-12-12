@@ -1,13 +1,8 @@
-//Package hook contains types and methods to build hooks - closures which work on computed metrics.
-//Hooks are meant to be called before doing reporting and after metrics has been computed without causing side effects.
-//hook package is tightly coupled with the rest of the application, which is kind of bad.
-package hook
+package micromon
 
 import (
-	"config"
 	"fmt"
 	"log"
-	"metric"
 	"strconv"
 	"time"
 )
@@ -19,16 +14,16 @@ import (
 //Simple examples are extra logging, alerting logic, etc.
 type Hooker interface {
 	//GetHook returns a hook and takes the application configuration in parameter.
-	GetHook(config.Config) Hook
+	GetHook(Config) Hook
 }
 
 //A Hook is just a procedure which operates on a set of WebMetrics.
 //It returns an arbitrary string for debugging and testing purpose.
-type Hook func([]metric.WebMetrics) string
+type Hook func([]WebMetrics) string
 
 //GetHook takes the name of a hook and a Config and returns the associated hook.
 //If no hook corresponding to name is found, a non-nil error is returned.
-func GetHook(name string, conf config.Config) (Hook, error) {
+func GetHook(name string, conf Config) (Hook, error) {
 	switch name {
 	case "alert":
 		return AlertHook{}.GetHook(conf), nil
@@ -80,10 +75,10 @@ func recoverAvailability(s []webDown, name string, when time.Time) ([]webDown, b
 	return s, false
 }
 
-func (AlertHook) GetHook(conf config.Config) Hook {
+func (AlertHook) GetHook(conf Config) Hook {
 	threshold := conf.AvailThreshold
 	memories := make([]webDown, 0)
-	return func(metrics []metric.WebMetrics) string {
+	return func(metrics []WebMetrics) string {
 		now := time.Now()
 		res := ""
 		effect := false
@@ -91,9 +86,9 @@ func (AlertHook) GetHook(conf config.Config) Hook {
 		for _, s := range metrics {
 			for _, m := range s.Metrics {
 				//If the availability has been computed, check its status
-				if _, ok := m.Source.(metric.Availability); ok {
+				if _, ok := m.Source.(Availability); ok {
 					//Behind threshold, register unavailability
-					if avail, ok := m.Output.(metric.MetricFloat); ok && avail < metric.MetricFloat(threshold) {
+					if avail, ok := m.Output.(MetricFloat); ok && avail < MetricFloat(threshold) {
 						memories, effect = addUnavailability(memories, s.WebsiteName, float64(avail), now)
 						if effect {
 							res = "unavailable"

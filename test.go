@@ -1,13 +1,8 @@
-//Package test contains tests to confront the application logic.
-package test
+package micromon
 
 import (
-	"config"
-	"hook"
-	"metric"
 	"net/http"
 	"time"
-	"urlwatch"
 )
 
 //TestAlerting tests the alerting logic. It simulates a real word situation and configuration.
@@ -22,13 +17,13 @@ func TestAlerting() bool {
 	srv := startHttpServer()
 
 	//Create minimal configuration
-	webserv := make(map[string]config.Website)
-	webserv["localhost"] = config.Website{"http://localhost:8080", 1}
-	conf := config.Config{Websites: webserv, Timeout: 3, AvailThreshold: 50}
+	webserv := make(map[string]Website)
+	webserv["localhost"] = Website{"http://localhost:8080", 1}
+	conf := Config{Websites: webserv, Timeout: 3, AvailThreshold: 50}
 
 	//Gather incoming MetaResponse
-	ch := urlwatch.WatchWebsites(conf)
-	data := metric.NewSafeData()
+	ch := WatchWebsites(conf)
+	data := NewSafeData()
 	go func() {
 		for {
 			resp := <-ch
@@ -39,7 +34,7 @@ func TestAlerting() bool {
 	}()
 
 	//Hook for alerting logic
-	hook := hook.AlertHook{}.GetHook(conf)
+	hook := AlertHook{}.GetHook(conf)
 
 	//Local webserver is available, hook should not return anything
 	time.Sleep(2 * time.Second)
@@ -72,11 +67,11 @@ func dummyResponse(w http.ResponseWriter, r *http.Request) {
 }
 
 //getAvailStatus computes availability metric and return alerting hook message
-func getAvailStatus(resp []urlwatch.MetaResponse, conf config.Config, alertHook hook.Hook) string {
-	avail := metric.Availability{}.Compute(resp)
-	dummyWebs := make([]metric.WebMetrics, 1)
-	dummyWeb := metric.WebMetrics{10, "localhost", make([]metric.WebMetric, 1)}
-	dummyWeb.Metrics = append(dummyWeb.Metrics, metric.WebMetric{metric.Availability{}, avail})
+func getAvailStatus(resp []MetaResponse, conf Config, alertHook Hook) string {
+	avail := Availability{}.Compute(resp)
+	dummyWebs := make([]WebMetrics, 1)
+	dummyWeb := WebMetrics{10, "localhost", make([]WebMetric, 1)}
+	dummyWeb.Metrics = append(dummyWeb.Metrics, WebMetric{Availability{}, avail})
 	dummyWebs = append(dummyWebs, dummyWeb)
 	return alertHook(dummyWebs)
 }

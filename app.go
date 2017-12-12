@@ -1,63 +1,35 @@
-//Package main contains methods to orchestrate the application logic.
-//It uses :
-// - config package to fetch the user configuration.
-// - urlwatch package to get a channel of HTTP responses.
-// - metric package to store HTTP responses and launch/collect a bunch of metrics computation.
-// - hook package to launch intermediate work on metrics.
-// - report package to format and write metrics.
-//Optionally, it uses the test package to launch some tests against the app logic.
-package main
+package micromon
 
 import (
-	"flag"
-	"hook"
 	"log"
-	"metric"
-	"report"
-	"test"
 	"time"
-	"urlwatch"
 )
 
-func main() {
-	//Handle command-line flags
-	testing := flag.Bool("test", false, "Set the flag to run tests")
-	confPath := flag.String("c", "mm.conf", "Path to the configuration file")
-	flag.Parse()
-
-	//Run in test mode : assert tests
-	if *testing {
-		launchTests()
-	} else {
-		start(*confPath)
-	}
-}
-
-//start... starts MicroMon with the configuration file which path is given in parameter.
-func start(path string) {
+//Start... starts MicroMon with the configuration file which path is given in parameter.
+func Start(path string) {
 	//Get configuration from file
-	conf := getConfig(path)
+	conf := GetConfig(path)
 
 	//Get channel for receiving website response data
-	ch := urlwatch.WatchWebsites(conf)
+	ch := WatchWebsites(conf)
 
 	//Create data structure for holding response data
-	datas := metric.NewRespMap(len(conf.Websites))
+	datas := NewRespMap(len(conf.Websites))
 	for k, _ := range conf.Websites {
-		datas[k] = metric.NewSafeData()
+		datas[k] = NewSafeData()
 	}
 
 	//Configure metrics, hook and reporter
-	metrics := getMetrics(conf)
-	reporter := getReporter(conf)
-	hooks := getHooks(conf)
+	metrics := GetMetrics(conf)
+	reporter := GetReporter(conf)
+	hooks := GetHooks(conf)
 
 	//Compute and write metrics every 10 seconds
 	go func() {
 		i := 0
 		for range time.Tick(10 * time.Second) {
 			i++
-			res := make([][]metric.WebMetrics, 0)
+			res := make([][]WebMetrics, 0)
 			//Metrics for the last 2 minutes and the last 10 minutes
 			res = append(res, (&datas).ComputeMetrics(metrics, 2))
 
@@ -85,9 +57,9 @@ func start(path string) {
 }
 
 //launchTests performs tests against the application logic and report results.
-func launchTests() {
+func LaunchTests() {
 	log.Printf("Starting tests...")
-	if test.TestAlerting() {
+	if TestAlerting() {
 		log.Print("Alerting test successfully passed !")
 	} else {
 		log.Fatalf("Alert test failed !")
@@ -96,14 +68,14 @@ func launchTests() {
 }
 
 //reportResult takes a slice of []WebMetrics and report information for each inner slice.
-func reportResults(metrics [][]metric.WebMetrics, reporter report.Reporter) {
+func reportResults(metrics [][]WebMetrics, reporter Reporter) {
 	for _, v := range metrics {
 		reporter.Report(v)
 	}
 }
 
 //applyHook takes a slice of []WebMetrics and call hooks for each inner slice.
-func applyHooks(metrics [][]metric.WebMetrics, hooks []hook.Hook) {
+func applyHooks(metrics [][]WebMetrics, hooks []Hook) {
 	for _, v := range metrics {
 		for _, h := range hooks {
 			h(v)

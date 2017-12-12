@@ -1,21 +1,19 @@
-//Package report contains types and methods to format and write metrics with context.
-package report
+package micromon
 
 import (
 	"encoding/xml"
 	"fmt"
 	"log"
-	"metric"
 	"os"
 )
 
 //Formatter defines how a metric formatter, i.e. a type which operates on Metric and associated Results, should behave.
 type Formatter interface {
 	//Single takes a Metric and its associated Result and produces a formatted string containing informations on both of them.
-	Single(metric.WebMetric) string
+	Single(WebMetric) string
 	//Multiple takes a WebMetrics, i.e. Metrics with their Results for a website and a timeframe.
 	//Multiple produces a formatted string which reports all theses informations.
-	Multiple(metric.WebMetrics) string
+	Multiple(WebMetrics) string
 	//Prefix returns a string which should precede a global reporting.
 	Prefix() string
 	//Suffix returns a string which should follow a global reporting.
@@ -40,12 +38,12 @@ type DefaultFormatter struct{}
 //XMLFormatter implements Formatter which formats metrics in XML suited for later parsing.
 type XMLFormatter struct{}
 
-func (DefaultFormatter) Single(m metric.WebMetric) string {
+func (DefaultFormatter) Single(m WebMetric) string {
 	//Each Metric on a single line
 	return m.Source.Description() + " : " + m.Output.Format(true)
 }
 
-func (f DefaultFormatter) Multiple(m metric.WebMetrics) string {
+func (f DefaultFormatter) Multiple(m WebMetrics) string {
 	//Website name
 	res := fmt.Sprintf("=== %v (last %v minutes) ===\n", m.WebsiteName, m.Timeframe)
 	//Each metric with a tabulation
@@ -63,11 +61,11 @@ func (DefaultFormatter) Suffix() string {
 	return ""
 }
 
-func (XMLFormatter) Single(m metric.WebMetric) string {
+func (XMLFormatter) Single(m WebMetric) string {
 	return fmt.Sprintf("<metric><name>%v</name><description>%v</description><value>%v</value></metric>", m.Source.Name(), m.Source.Description(), m.Output.Format(true))
 }
 
-func (f XMLFormatter) Multiple(m metric.WebMetrics) string {
+func (f XMLFormatter) Multiple(m WebMetrics) string {
 	res := fmt.Sprintf("<metrics><website><name>%v</name></website><timeframe>%v</timeframe>", m.WebsiteName, m.Timeframe)
 	for _, v := range m.Metrics {
 		res += f.Single(v)
@@ -90,7 +88,7 @@ func (XMLFormatter) Suffix() string {
 
 //Report allows to format and write multiple metrics for multiple website computed within a given timeframe.
 //It uses the Formatter to format (Metric, Result)s and the Logger to write the final result.
-func (r Reporter) Report(metrics []metric.WebMetrics) {
+func (r Reporter) Report(metrics []WebMetrics) {
 	res := r.f.Prefix()
 	for _, v := range metrics {
 		res += r.f.Multiple(v)
