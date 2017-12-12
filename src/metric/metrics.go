@@ -1,6 +1,7 @@
 package metric
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 	"urlwatch"
@@ -18,8 +19,27 @@ type Metric interface {
 	//Compute takes a slice of MetaResponse and produce a single aggregated Result.
 	Compute([]urlwatch.MetaResponse) Result
 
-	//Description is a string describing what does the Metric.
+	//Description returns a string describing what does the Metric.
 	Description() string
+
+	//Name returns the name of the Metric.
+	Name() string
+}
+
+//GetMetric allows to instantiate a Metric from a string and returns it.
+//If no corresponding Metric is found, a non-nil error is returned.
+func GetMetric(name string) (Metric, error) {
+	switch name {
+	case "averageTime":
+		return AvgRespTime{}, nil
+	case "maxTime":
+		return MaxRespTime{}, nil
+	case "codeCount":
+		return CodeCount{}, nil
+	case "availability":
+		return Availability{}, nil
+	}
+	return nil, fmt.Errorf("%s is not a known metric name", name)
 }
 
 //AvgRespTime implements Metric and compute the average response time.
@@ -46,6 +66,10 @@ func (AvgRespTime) Description() string {
 	return "Average response time (ms)"
 }
 
+func (AvgRespTime) Name() string {
+	return "averageTime"
+}
+
 func (MaxRespTime) Compute(data []urlwatch.MetaResponse) Result {
 	max := time.Duration(0)
 	for _, m := range data {
@@ -58,6 +82,10 @@ func (MaxRespTime) Compute(data []urlwatch.MetaResponse) Result {
 
 func (MaxRespTime) Description() string {
 	return "Maximum response time (ms)"
+}
+
+func (MaxRespTime) Name() string {
+	return "maxTime"
 }
 
 func (CodeCount) Compute(data []urlwatch.MetaResponse) Result {
@@ -76,6 +104,10 @@ func (CodeCount) Description() string {
 	return "HTTP codes counts"
 }
 
+func (CodeCount) Name() string {
+	return "codeCount"
+}
+
 func (Availability) Compute(data []urlwatch.MetaResponse) Result {
 	count := 0
 	for _, m := range data {
@@ -88,6 +120,10 @@ func (Availability) Compute(data []urlwatch.MetaResponse) Result {
 
 func (Availability) Description() string {
 	return "Availability (%)"
+}
+
+func (Availability) Name() string {
+	return "availability"
 }
 
 //MetricInt implements Result and represents an integer result.

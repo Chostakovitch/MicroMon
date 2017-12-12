@@ -19,12 +19,11 @@ type MetaResponse struct {
 
 //CheckUrl produces a MetaResponse after visiting a given Website.
 //So called "response time" is measured as the interval bewteen the start of server processing and the first byte received.
-func CheckUrl(url string) (MetaResponse, error) {
+func CheckUrl(url string, timeout time.Duration) (MetaResponse, error) {
 	meta := MetaResponse{URL: url}
 
 	//New Client with low timeout
-	//TODO put timeout in config
-	client := http.Client{Timeout: 2 * time.Second}
+	client := http.Client{Timeout: timeout}
 
 	//GET request with trace behaviour
 	req, _ := http.NewRequest("GET", url, nil)

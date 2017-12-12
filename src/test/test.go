@@ -24,7 +24,7 @@ func TestAlerting() bool {
 	//Create minimal configuration
 	webserv := make(map[string]config.Website)
 	webserv["localhost"] = config.Website{"http://localhost:8080", 1}
-	conf := config.Config{webserv, 10, 3}
+	conf := config.Config{Websites: webserv, Timeout: 3}
 
 	//Gather incoming MetaResponse
 	ch := urlwatch.WatchWebsites(conf)

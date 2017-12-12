@@ -26,6 +26,16 @@ type Hooker interface {
 //It returns an arbitrary string for debugging and testing purpose.
 type Hook func([]metric.WebMetrics) string
 
+//GetHook takes the name of a hook and a Config and returns the associated hook.
+//If not hook corresponding to name is found, a non-nil error is returned.
+func GetHook(name string, conf config.Config) (Hook, error) {
+	switch name {
+	case "alert":
+		return AlertHook{}.GetHook(conf), nil
+	}
+	return nil, fmt.Errorf("%s is not a known hook name", name)
+}
+
 //AlertHook is an empty struct which implements Hook.
 //It provides a hook which manages the logic alert when websites availability is behind a threshold.
 //The hook, being a closure, can keep trace of previous alerts and keep them on screen.
@@ -41,10 +51,10 @@ type webDown struct {
 	whenRecovered time.Time
 }
 
-//addUnavailabity is called when a website is unavailable. It records a new unavailability if
+//addUnavailability is called when a website is unavailable. It records a new unavailability if
 //no old unavailability concerning this website is still unrecovered.
 //It returns a boolean which indicates if a new unavailability has been recorded and a slice describing all previous unavailabilities.
-func addUnavailabity(s []webDown, name string, avail float64, when time.Time) ([]webDown, bool) {
+func addUnavailability(s []webDown, name string, avail float64, when time.Time) ([]webDown, bool) {
 	for i := len(s) - 1; i >= 0; i-- {
 		//There is still an alert for this website, don't add one
 		if s[i].name == name && !s[i].recovered {
@@ -71,8 +81,7 @@ func recoverAvailability(s []webDown, name string, when time.Time) ([]webDown, b
 }
 
 func (AlertHook) GetHook(conf config.Config) Hook {
-	//TODO put this in config
-	threshold := 80
+	threshold := conf.AvailThreshold
 	memories := make([]webDown, 0)
 	return func(metrics []metric.WebMetrics) string {
 		now := time.Now()
@@ -83,7 +92,7 @@ func (AlertHook) GetHook(conf config.Config) Hook {
 			for _, m := range s.M {
 				if _, ok := m.M.(metric.Availability); ok {
 					if avail, ok := m.R.(metric.MetricFloat); ok && avail < metric.MetricFloat(threshold) {
-						memories, effect = addUnavailabity(memories, s.N, float64(avail), now)
+						memories, effect = addUnavailability(memories, s.N, float64(avail), now)
 						if effect {
 							res = "unavailable"
 						}

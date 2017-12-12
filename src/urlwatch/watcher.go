@@ -13,24 +13,23 @@ import (
 //Returns a channel which will receive MetaResponse each time a request is performed.
 //Each website has its own timed goroutine.
 func WatchWebsites(conf config.Config) chan MetaResponse {
-	//TODO changer ce magic number
 	ch := make(chan MetaResponse, 100)
 	for name, website := range conf.Websites {
 		//Each website has an associated goroutine which perform a request
 		//every X seconds, X user-defined, and send it to the global channel
-		go func(name string, website config.Website, dataChan chan MetaResponse) {
+		go func(name string, website config.Website, dataChan chan MetaResponse, timeout time.Duration) {
 			for range time.Tick(time.Duration(website.Interval) * time.Second) {
-				feedChan(website.URL, name, dataChan)
+				feedChan(website.URL, name, dataChan, timeout)
 			}
-		}(name, website, ch)
+		}(name, website, ch, time.Duration(conf.Timeout)*time.Second)
 	}
 	return ch
 }
 
-//feedChan takes an url, check it, compute a MetaResponse and
+//feedChan takes an url, check it with a custom timeout, compute a MetaResponse and
 //put it in a channel to make it compatible with the use of goroutines.
-func feedChan(url string, name string, data chan MetaResponse) {
-	metaResp, err := CheckUrl(url)
+func feedChan(url string, name string, data chan MetaResponse, timeout time.Duration) {
+	metaResp, err := CheckUrl(url, timeout)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}

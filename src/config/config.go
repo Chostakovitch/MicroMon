@@ -11,6 +11,11 @@ type Config struct {
 	Websites        map[string]Website
 	DefaultInterval int
 	Timeout         int
+	AvailThreshold  int
+	Metrics         []string
+	Hooks           []string
+	Format          string
+	Output          string
 }
 
 //Website is an URL and a check interval.

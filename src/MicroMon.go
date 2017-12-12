@@ -9,10 +9,8 @@ package main
 
 import (
 	"hook"
-	"log"
 	"time"
 
-	"config"
 	"metric"
 	"report"
 	"urlwatch"
@@ -32,9 +30,9 @@ func main() {
 	}
 
 	//Configure metrics, hook and reporter
-	metrics := []metric.Metric{metric.AvgRespTime{}, metric.MaxRespTime{}, metric.CodeCount{}, metric.Availability{}}
-	reporter := report.NewReporter(report.DefaultLogger(), report.DefaultFormatter{})
-	hooks := []hook.Hook{hook.AlertHook{}.GetHook(conf)}
+	metrics := getMetrics(conf)
+	reporter := getReporter(conf)
+	hooks := getHooks(conf)
 
 	//Compute and write metrics every 10 seconds / 1 minute
 	go func() {
@@ -66,15 +64,6 @@ func main() {
 		datas[name].Datas = append(datas[name].Datas, data)
 		datas[name].Mux.Unlock()
 	}
-}
-
-//getConfig returns a Config fetched from the path given in parameter
-func getConfig(path string) config.Config {
-	conf, err := config.FetchConfig(path)
-	if err != nil {
-		log.Fatalf("%v", err)
-	}
-	return conf
 }
 
 //reportResult takes a slice of []WebMetrics and report each inner slice.
