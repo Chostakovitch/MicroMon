@@ -10,6 +10,7 @@ import (
 type Config struct {
 	Websites        map[string]Website
 	DefaultInterval int
+	Timeout         int
 }
 
 //Website is an URL and a check interval.

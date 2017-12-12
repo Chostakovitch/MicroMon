@@ -2,6 +2,7 @@
 //
 //metric defines several types. First, Metric and Result are primitives to aggregate MetaResponse.
 //Second, respMap associates a website's name with a safeData, which is a thread-compatible slice of MetaResponse.
+//Finally, WebMetrics associates a website's name with a slice of WebMetric, which is basically a Metric along with its Result.
 //
 //The most important method is respMap.ComputeMetrics, which compute metrics for each website within a given interval.
 package metric
@@ -11,6 +12,18 @@ import (
 	"time"
 	"urlwatch"
 )
+
+//WebMetrics is a simple wrapper to associate a website name with its set of Metric and Result, for a given timeframe (in minutes)
+type WebMetrics struct {
+	Timeframe int
+	N         string
+	M         []WebMetric
+}
+
+type WebMetric struct {
+	M Metric
+	R Result
+}
 
 //respMap is just a map of website names associated with a safeData struct.
 type respMap map[string]*safeData
@@ -34,8 +47,8 @@ func NewSafeData() *safeData {
 
 //ComputeMetrics compute multiple metrics for a given timeframe and return the packed result.
 //It operates on a respMap struct, basically a set of websites names associated with MetaResponse.
-func (s *respMap) ComputeMetrics(metrics []Metric, minutes int) map[string]map[Metric]Result {
-	res := make(map[string]map[Metric]Result)
+func (s *respMap) ComputeMetrics(metrics []Metric, minutes int) []WebMetrics {
+	res := make([]WebMetrics, 0)
 
 	//Iterate over each website data
 	for k, v := range *s {
@@ -48,12 +61,14 @@ func (s *respMap) ComputeMetrics(metrics []Metric, minutes int) map[string]map[M
 		if len(datas) == 0 {
 			continue
 		}
-		res[k] = make(map[Metric]Result)
+		tempRes := WebMetrics{minutes, k, make([]WebMetric, 0)}
 
 		//For each metric asked, add result
 		for _, m := range metrics {
-			res[k][m] = m.Compute(datas)
+			tempRes.M = append(tempRes.M, WebMetric{m, m.Compute(datas)})
 		}
+
+		res = append(res, tempRes)
 	}
 	return res
 }

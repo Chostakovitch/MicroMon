@@ -4,8 +4,6 @@ import (
 	"net/http"
 	"net/http/httptrace"
 	"time"
-
-	"net"
 )
 
 //MetaResponse holds a website response's metadata, e.g. response code, response time, availibity, language...
@@ -26,7 +24,7 @@ func CheckUrl(url string) (MetaResponse, error) {
 
 	//New Client with low timeout
 	//TODO put timeout in config
-	client := http.Client{Timeout: 3 * time.Second}
+	client := http.Client{Timeout: 2 * time.Second}
 
 	//GET request with trace behaviour
 	req, _ := http.NewRequest("GET", url, nil)
@@ -37,22 +35,15 @@ func CheckUrl(url string) (MetaResponse, error) {
 
 	meta.Timestamp = time.Now()
 
-	//Timeout management
+	//We consider all errors as unavailability (if we only handle net.error Timeout error type, a non-existing URL throws an error)
 	if err != nil {
-		//If error is timeout error, we handle that one and throw others
-		if nerr, ok := err.(net.Error); ok && nerr.Timeout() {
-			meta.Available = false
-		} else {
-			return meta, err
-		}
+		meta.Available = false
 	} else {
 		meta.Available = true
+		meta.Code = resp.StatusCode
 	}
 
-	//HTTP code
-	meta.Code = resp.StatusCode
-
-	return meta, err
+	return meta, nil
 }
 
 //withMetaResponse adapts an HTTP Request to feed a MetaResponse object while performing request, thank to httptrace features.

@@ -34,7 +34,7 @@ func feedChan(url string, name string, data chan MetaResponse) {
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
-	//Add name to make MetaResponse independant
+	//Add name to make MetaResponse independent
 	metaResp.Name = name
 	data <- metaResp
 }

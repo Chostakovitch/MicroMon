@@ -12,11 +12,10 @@ import (
 //Formatter defines how a metric formatter, i.e. a type which operates on Metric and associated Results, should behave.
 type Formatter interface {
 	//Single takes a Metric and its associated Result and produces a formatted string containing informations on both of them.
-	Single(metric.Metric, metric.Result) string
-	//Multiple takes a slice of Metrics, defined the process ordering, as such as a map of Metric associated with Result.
-	//The last string is the name of the object concerned by the Metrics.
+	Single(metric.WebMetric) string
+	//Multiple takes a WebMetrics, i.e. Metrics with their Results for a website and a timeframe.
 	//Multiple produces a formatted string which reports all theses informations.
-	Multiple([]metric.Metric, map[metric.Metric]metric.Result, string) string
+	Multiple(metric.WebMetrics) string
 }
 
 //A Reporter is the association of a Logger and a Formatter.
@@ -34,17 +33,17 @@ func NewReporter(l *log.Logger, f Formatter) Reporter {
 //DefaultFormatter implements Formatter and is a provided classic formatter suited for console writing.
 type DefaultFormatter struct{}
 
-func (DefaultFormatter) Single(m metric.Metric, r metric.Result) string {
+func (DefaultFormatter) Single(m metric.WebMetric) string {
 	//Each Metric on a single line
-	return m.Description() + " : " + r.Format(true)
+	return m.M.Description() + " : " + m.R.Format(true)
 }
 
-func (f DefaultFormatter) Multiple(order []metric.Metric, metrics map[metric.Metric]metric.Result, name string) string {
+func (f DefaultFormatter) Multiple(metrics metric.WebMetrics) string {
 	//Website name
-	res := fmt.Sprintf("=== %v ===\n", name)
+	res := fmt.Sprintf("=== %v (last %v minutes) ===\n", metrics.N, metrics.Timeframe)
 	//Each metric with a tabulation
-	for _, v := range order {
-		res += fmt.Sprintf("\t%v\n", f.Single(v, metrics[v]))
+	for _, v := range metrics.M {
+		res += fmt.Sprintf("\t%v\n", f.Single(v))
 	}
 	return res
 }
@@ -52,12 +51,11 @@ func (f DefaultFormatter) Multiple(order []metric.Metric, metrics map[metric.Met
 //Report allows to format and write multiple metrics for multiple website computed within a given timeframe.
 //order defines metrics order when formatting.
 //metrics is map which associated a website name with Metrics and their corresponding Result.
-//since is an integer which represents a timeframe in minutes.
 //Report use the Formatter to format (Metric, Result)s and the Logger to write the final result.
-func (r Reporter) Report(order []metric.Metric, metrics map[string]map[metric.Metric]metric.Result, since int) {
-	res := fmt.Sprintf("Metrics for the last %v minute(s) :\n", since)
-	for k, v := range metrics {
-		res += r.f.Multiple(order, v, k)
+func (r Reporter) Report(metrics []metric.WebMetrics) {
+	res := "Reporting metrics :\n"
+	for _, v := range metrics {
+		res += r.f.Multiple(v)
 	}
 	r.l.Printf("%v", res)
 }
