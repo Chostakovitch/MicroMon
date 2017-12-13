@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"log"
 
-	"yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 //Config is a struct which mirrors the structure of the YAML configuration file.
