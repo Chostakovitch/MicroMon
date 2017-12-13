@@ -99,7 +99,7 @@ func (r Reporter) Report(metrics []WebMetrics) {
 
 //DefaultLogger is a convenient function which returns a pointer to a basic Logger, with [MicroMon] prefix and local datetime prefix.
 func DefaultLogger() *log.Logger {
-	return log.New(os.Stdout, "[MicroMon] ", log.LstdFlags)
+	return log.New(os.Stdout, "\n[MicroMon] ", log.LstdFlags)
 }
 
 //FileLogger is a convenient function which returns a pointer to a logger which writes in a file.

@@ -48,23 +48,24 @@ Examples
 
 This example shows how to get a single MetaResponse from a website.
 
-	//Timeout is 1 second
-	resp, err := CheckUrl("https://github.com", 1)
+	//Timeout is 3 second
+	resp, err := CheckUrl("https://github.com", 3 * time.Second)
+
 
 This example shows how to collect responses from a website without computing any metric.
 
 	//Websites to watch and check intervals
-	webs := make(map[string]Website)
-	webs["github"] = Website{URL:"https://github.com"}
-	conf := Config{Websites: webs, Timeout: 1}
+	webs := map[string]Website{"github": Website{"https://github.com", 3}}
 
-	//Get MetaResponse channel
-	ch := WatchWebsites(conf)
+	//Get response channel
+	ch := WatchWebsites(Config{Websites: webs})
 
-	//Gather incoming MetaResponse
+
+	//Gather incoming responses
 	data := NewSafeData()
 	for {
 		resp := <-ch
+		fmt.Printf("%v\n", resp)
 		data.Mux.Lock()
 		data.Datas = append(data.Datas, resp)
 		data.Mux.Unlock()

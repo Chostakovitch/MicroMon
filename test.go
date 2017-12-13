@@ -61,7 +61,7 @@ func TestAlerting() bool {
 	return true
 }
 
-//dummyResponse is a handler which responds with a 200 HTTP code for testing purspose/
+//dummyResponse is a handler which responds with a 200 HTTP code for testing purpose
 func dummyResponse(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
