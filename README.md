@@ -1,31 +1,14 @@
 # MicroMon
 
-Website availability & performance monitoring. This is a micro-project for an internship application.
+MicroMon is a micro application to monitor websites performance and availability created for an internship application. It watches websites at regular intervals, compute metrics for different timeframes and report them. It also warns the user when a website availability is too low.
 
-## Specifications
+A convenient way to use it is with a configuration file. An almost self-explained example is provided in `mm.conf`.
 
-### Overview
+To run MicroMon, just `go install` the main package and run `/path/to/binary -c /path/to/conf`.
 
-* Create a console program to monitor performance and availability of websites
-* Websites and check intervals are user defined
-* Users can keep the console app running and monitor the websites
-
-### Stats
-
-* Check the different websites with their corresponding check intervals
-  * Compute a few interesting metrics: availability, max/avg response times, response codes count and more…
-  * Over different timeframes: 2 minutes and 10 minutes
-* Every 10s, display the stats for the past 10 minutes for each website
-* Every minute, displays the stats for the past hour for each website
-
-### Alerting
-
-* When a website availability is below 80% for the past 2 minutes, add a message saying that
-    “Website {website} is down. availability={availablility}, time={time}”
-* When availability resumes for the past 2 minutes, add another message detailing when the alert recovered
-* Make sure all messages showing when alerting thresholds are crossed remain visible on the page for historical reasons
-
-### Tests & question
-
-* Write a test for the alerting logic
-* Explain how you’d improve on this application design
+The [Wiki section](https://github.com/Chostakovitch/MicroMon/wiki) details :
+* More options for configuration file
+* How to use MicroMon as a library
+* How to easily extend MicroMon with new features
+* Details about architecture and implementation
+* What improvements could be done
