@@ -12,3 +12,5 @@ The [Wiki section](https://github.com/Chostakovitch/MicroMon/wiki) details :
 * How to easily extend MicroMon with new features
 * Details about architecture and implementation
 * What improvements could be done
+
+See also [package documentation](https://godoc.org/github.com/Chostakovitch/MicroMon)
