@@ -4,7 +4,7 @@ MicroMon is a micro application to monitor websites performance and availability
 
 A convenient way to use it is with a configuration file. An almost self-explained example is provided in `mm.conf`.
 
-To run MicroMon, just `go install` the main package and run `/path/to/binary -c /path/to/conf`.
+To run MicroMon, just `go get github.com/chostakovitch/micromon`, `go install github.com/chostakovitch/micromon/main` and run `/path/to/binary -c /path/to/conf`.
 
 The [Wiki section](https://github.com/Chostakovitch/MicroMon/wiki) details :
 * More options for configuration file
